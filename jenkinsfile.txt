@@ -1,0 +1,89 @@
+pipeline {
+    agent any
+        stages {
+            stage('Parameters'){
+                steps {
+                    script {
+                    properties([
+                            parameters([
+                                [$class: 'ChoiceParameter', 
+                                    choiceType: 'PT_SINGLE_SELECT', 
+                                    description: 'Please choose the correct INTANCE_ENV', 
+                                    filterLength: 1, 
+                                    filterable: false, 
+                                    name: 'EC2_INSTANCE_WATO_ENV', 
+                                    script: [
+                                        $class: 'GroovyScript', 
+                                        fallbackScript: [
+                                            classpath: [], 
+                                            sandbox: false, 
+                                            script: 
+                                                "return['Please choose the correct EC2_INSTANCE']"
+                                        ], 
+                                        script: [
+                                            classpath: [], 
+                                            sandbox: false, 
+                                            script: 
+                                                "return['DEV','QA','PROD']"
+                                        ]
+                                    ]
+                                ],
+                                [$class: 'CascadeChoiceParameter', 
+                                    choiceType: 'PT_MULTI_SELECT', 
+                                    description: 'Please select the correct EC2_INSTANCE_ID',
+                                    name: 'EC2_INSTANCE_ID', 
+                                    referencedParameters: 'EC2_INSTANCE_WATO_ENV', 
+                                    script: 
+                                        [$class: 'GroovyScript', 
+                                        fallbackScript: [
+                                                classpath: [], 
+                                                sandbox: false, 
+                                                script: "return['Please select the correct EC2_INSTANCE_ID']"
+                                                ], 
+                                        script: [
+                                                classpath: [], 
+                                                sandbox: false, 
+                                                script: '''
+                                                if (EC2_INSTANCE_WATO_ENV.equals("DEV")){
+                                                    return["ami-sd3456sd", "ami-asdf455sdf", "ami-asdf6745sd"]
+                                                 }
+                                                 else if(EC2_INSTANCE_WATO_ENV.equals("QA")){
+                                                     return["ami-sd89sdf", "ami-sdf309sdc", "ami-sdf87sdf"]    
+                                                   }
+                                                 else if(EC2_INSTANCE_WATO_ENV.equals("PROD")){
+                                                      return["ami-sdf76", "ami-sdf23ds", "ami-sdf3s11"]
+                                                }
+                                                '''
+                                            ] 
+                                    ]
+                                ],
+                                [$class: 'DynamicReferenceParameter', 
+                                    choiceType: 'ET_ORDERED_LIST', 
+                                    description: 'Please select the correct SERVER', 
+                                    name: 'Server', 
+                                    referencedParameters: 'EC2_INSTANCE_ID', 
+                                    script: 
+                                        [$class: 'GroovyScript', 
+                                        script: 'return["Please select the correct SERVER"]', 
+                                        script: [
+                                            script: '''
+                                                    if (EC2_INSTANCE_ID.equals("DEV")){
+                                                      return["DEV_WATO1","DEV_WATO2"]
+                                                }
+                                                 else if(EC2_INSTANCE_ID.equals("QA")){
+                                                      return["QA_WATO1","QA_WATO2"]
+                                                  }
+                                              else if(EC2_INSTANCE_ID.equals("PROD")){
+                                                     return["PROD_WATO1","PROD_WATO2"]
+                                                    }
+                                                    '''
+                                                ]
+                                        ]
+                                ]
+                            ])
+                        ])
+                    }
+                }
+            }
+        }   
+}
